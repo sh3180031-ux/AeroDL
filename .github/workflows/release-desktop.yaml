@@ -5,6 +5,11 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag to publish (e.g. v2.0.6)"
+        required: true
+        default: "v2.0.6"
 
 permissions:
   contents: write
@@ -41,10 +46,11 @@ jobs:
       - name: Normalize version for manual runs
         if: github.event_name == 'workflow_dispatch'
         shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          tag="$(git describe --tags --abbrev=0)"
-          echo "RELEASE_VERSION=$tag" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=$INPUT_VERSION" >> "$GITHUB_ENV"
 
       - name: Setup Nucleus (GraalVM)
         uses: NucleusFramework/Nucleus/.github/actions/setup-nucleus@v2.5.1
@@ -148,11 +154,13 @@ jobs:
 
       - name: Determine version and channel
         shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME}"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            TAG="$(git describe --tags --abbrev=0)"
+            TAG="$INPUT_VERSION"
           fi
           VERSION="${TAG#v}"
           echo "TAG=$TAG" >> "$GITHUB_ENV"
