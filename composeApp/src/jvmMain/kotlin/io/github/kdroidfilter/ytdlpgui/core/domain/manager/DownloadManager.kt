@@ -98,6 +98,8 @@ class DownloadManager(
         val conversionHandle: ConversionHandle? = null,
         val outputFormat: String? = null,
         val totalDuration: java.time.Duration? = null,
+        // Plain file download (EXE, ZIP, Google Drive file...) instead of yt-dlp
+        val isDirectFile: Boolean = false,
     ) {
         enum class Status { Pending, Running, Completed, Failed, Cancelled }
 
@@ -206,6 +208,15 @@ class DownloadManager(
         )
         // Store options in a temporary map for retrieval during launch
         conversionOptionsMap[item.id] = options
+        _items.value += item
+        pendingQueue.addLast(item.id)
+        maybeStartPending()
+        return item.id
+    }
+
+    /** Downloads any file (EXE, ZIP, PDF, Google Drive file...) without yt-dlp. */
+    fun startDirectFile(url: String): String {
+        val item = DownloadItem(url = url, isDirectFile = true)
         _items.value += item
         pendingQueue.addLast(item.id)
         maybeStartPending()
@@ -389,6 +400,12 @@ class DownloadManager(
         )
 
         val handle = when {
+            item.isDirectFile -> DirectFileDownloader.download(
+                url = item.url,
+                targetDir = ytDlpWrapper.downloadDir
+                    ?: File(System.getProperty("user.home"), "Downloads"),
+                onEvent = eventHandler
+            )
             item.preset == null && item.splitChapters -> downloadAudioSplitChapters(item, eventHandler)
             item.preset == null -> downloadAudio(item, eventHandler)
             item.splitChapters -> downloadVideoSplitChapters(item, eventHandler)
@@ -733,7 +750,7 @@ class DownloadManager(
             url = item.url,
             videoInfo = item.videoInfo,
             outputPath = outputFilePath,
-            isAudio = item.preset == null,
+            isAudio = item.preset == null && !item.isDirectFile,
             isSplit = item.splitChapters,
             presetHeight = item.preset?.height,
             createdAt = System.currentTimeMillis()

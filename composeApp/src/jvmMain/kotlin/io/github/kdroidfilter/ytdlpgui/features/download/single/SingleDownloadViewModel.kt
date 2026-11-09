@@ -7,6 +7,7 @@ import io.github.kdroidfilter.ytdlp.YtDlpWrapper
 import io.github.kdroidfilter.ytdlp.model.SubtitleInfo
 import io.github.kdroidfilter.ytdlp.model.VideoInfo
 import io.github.kdroidfilter.ytdlp.core.DownloadSection
+import io.github.kdroidfilter.ytdlpgui.core.domain.manager.DirectFileDownloader
 import io.github.kdroidfilter.ytdlpgui.core.domain.manager.DownloadManager
 import io.github.kdroidfilter.ytdlpgui.core.navigation.Destination
 import io.github.kdroidfilter.ytdlpgui.core.ui.MVIViewModel
@@ -156,6 +157,14 @@ class SingleDownloadViewModel(
     init {
         val scope = CoroutineScope(Dispatchers.IO)
         scope.launch {
+            // Plain files (EXE, ZIP, PDF, Google Drive files...) skip yt-dlp and download directly.
+            if (isPlainFileLink(videoUrl)) {
+                infoln { "[SingleDownloadViewModel] Direct file download for $videoUrl" }
+                downloadManager.startDirectFile(videoUrl)
+                _isLoading.value = false
+                _navigationState.value = SingleDownloadNavigationState.NavigateToDownloader
+                return@launch
+            }
             infoln { "Getting video info for $videoUrl" }
             ytDlpWrapper.getVideoInfoWithAllSubtitles(
                 url = videoUrl,
@@ -362,6 +371,13 @@ class SingleDownloadViewModel(
                 _navigationState.value = SingleDownloadNavigationState.None
             }
         }
+    }
+
+    /** True for links that point to a plain file rather than a video page. */
+    private fun isPlainFileLink(url: String): Boolean {
+        val lower = url.lowercase()
+        if (listOf("youtube.com", "youtu.be").any { lower.contains(it) }) return false
+        return DirectFileDownloader.looksLikeFile(url) || DirectFileDownloader.probeIsFile(url)
     }
 
     /**

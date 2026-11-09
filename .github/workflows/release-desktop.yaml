@@ -22,19 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Linux x64
-            os: ubuntu-latest
-            arch: amd64
-          - name: Linux ARM64
-            os: ubuntu-24.04-arm
-            arch: arm64
-          - name: macOS ARM64
-            os: macos-latest
-            arch: arm64
-          # macOS Intel falls back to GA 25.0.x: GraalVM 25.1 has no macos-x64 feature build.
-          - name: macOS Intel
-            os: macos-15-intel
-            arch: amd64
+          # Personal build: Windows only.
           - name: Windows x64
             os: windows-latest
             arch: amd64

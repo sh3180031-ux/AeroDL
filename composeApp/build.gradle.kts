@@ -161,7 +161,7 @@ nucleus.application {
         publish {
             github {
                 enabled = true
-                owner = "kdroidFilter"
+                owner = "sh3180031-ux"
                 repo = "AeroDL"
                 channel = ReleaseChannel.Latest
                 releaseType = ReleaseType.Release

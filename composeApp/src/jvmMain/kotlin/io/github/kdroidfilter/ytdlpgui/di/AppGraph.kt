@@ -53,7 +53,7 @@ abstract class AppGraph : ViewModelGraph {
     @Provides
     @SingleIn(AppScope::class)
     fun provideNucleusUpdater(): NucleusUpdater = NucleusUpdater {
-        provider = GitHubProvider(owner = "kdroidFilter", repo = "AeroDL")
+        provider = GitHubProvider(owner = "sh3180031-ux", repo = "AeroDL")
         httpClient = NativeHttpClient.create()
     }
 

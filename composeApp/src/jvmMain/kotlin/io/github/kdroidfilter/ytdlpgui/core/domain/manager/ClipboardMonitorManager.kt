@@ -92,11 +92,13 @@ class ClipboardMonitorManager(
         val lower = url.lowercase()
         val isYouTube = listOf("youtube.com", "youtu.be").any { lower.contains(it) }
 
-        // Only accept YouTube links for clipboard monitoring
-        if (!isYouTube) return
+        // Accept YouTube, other well-known video sites, and links to plain files (EXE, ZIP, Drive...)
+        val isKnownVideoSite = VIDEO_SITES.any { lower.contains(it) }
+        if (!isYouTube && !isKnownVideoSite && !DirectFileDownloader.looksLikeFile(url)) return
 
-        val isPlaylist = lower.contains("list=") || lower.contains("/playlist")
-        val isChannel = lower.contains("/channel/") || lower.contains("/c/") || lower.contains("youtube.com/@")
+        val isPlaylist = isYouTube && (lower.contains("list=") || lower.contains("/playlist"))
+        val isChannel = isYouTube &&
+            (lower.contains("/channel/") || lower.contains("/c/") || lower.contains("youtube.com/@"))
 
         // Avoid bulk (playlist/channel) prompts which can be noisy.
         if (isPlaylist || isChannel) return
@@ -128,5 +130,14 @@ class ClipboardMonitorManager(
             button(title = openBtn) { action() }
             button(title = ignoreBtn) { }
         }.send()
+    }
+
+    private companion object {
+        val VIDEO_SITES = listOf(
+            "vimeo.com", "dailymotion.com", "dai.ly", "facebook.com", "fb.watch", "instagram.com",
+            "tiktok.com", "twitter.com", "x.com/", "twitch.tv", "soundcloud.com", "rumble.com",
+            "odysee.com", "bilibili.com", "reddit.com", "streamable.com", "vk.com", "ok.ru",
+            "bandcamp.com", "mixcloud.com", "ted.com", "archive.org",
+        )
     }
 }
